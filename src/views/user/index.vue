@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
-import { createTableDataApi, deleteTableDataApi, updateTableDataApi, getTableDataApi } from "@/api/table"
-import { type CreateOrUpdateTableRequestData, type TableData } from "@/api/table/types/table"
+import { createUserDataApi, deleteUserDataApi, getUserDataApi, updateUserDataApi } from "@/api/user"
+import { CreateOrUpdateUserRequestData, UserData } from "@/api/user/types/user"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
@@ -16,28 +16,32 @@ const loading = ref<boolean>(false)
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 //#region 增
-const DEFAULT_FORM_DATA: CreateOrUpdateTableRequestData = {
+const DEFAULT_FORM_DATA: CreateOrUpdateUserRequestData = {
   id: undefined,
   username: "",
-  password: ""
+  password: "",
+  email: "",
+  phone: ""
 }
 const dialogVisible = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
-const formData = ref<CreateOrUpdateTableRequestData>(cloneDeep(DEFAULT_FORM_DATA))
-const formRules: FormRules<CreateOrUpdateTableRequestData> = {
+const formData = ref<CreateOrUpdateUserRequestData>(cloneDeep(DEFAULT_FORM_DATA))
+const formRules: FormRules<CreateOrUpdateUserRequestData> = {
   username: [{ required: true, trigger: "blur", message: "请输入用户名" }],
-  password: [{ required: true, trigger: "blur", message: "请输入密码" }]
+  password: [{ required: true, trigger: "blur", message: "请输入密码" }],
+  email: [{ required: true, trigger: "blur", message: "请输入邮箱" }],
+  phone: [{ required: true, trigger: "blur", message: "请输入手机号" }]
 }
 const handleCreateOrUpdate = () => {
   formRef.value?.validate((valid: boolean, fields) => {
     if (!valid) return console.error("表单校验不通过", fields)
     loading.value = true
-    const api = formData.value.id === undefined ? createTableDataApi : updateTableDataApi
+    const api = formData.value.id === undefined ? createUserDataApi : updateUserDataApi
     api(formData.value)
       .then(() => {
         ElMessage.success("操作成功")
         dialogVisible.value = false
-        getTableData()
+        getUserData()
       })
       .finally(() => {
         loading.value = false
@@ -51,55 +55,57 @@ const resetForm = () => {
 //#endregion
 
 //#region 删
-const handleDelete = (row: TableData) => {
+const handleDelete = (row: UserData) => {
   ElMessageBox.confirm(`正在删除用户：${row.username}，确认删除？`, "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning"
   }).then(() => {
-    deleteTableDataApi(row.id).then(() => {
+    deleteUserDataApi(row.id).then(() => {
       ElMessage.success("删除成功")
-      getTableData()
+      getUserData()
     })
   })
 }
 //#endregion
 
 //#region 改
-const handleUpdate = (row: TableData) => {
+const handleUpdate = (row: UserData) => {
   dialogVisible.value = true
+  row.phone = row.phone.toString()
   formData.value = cloneDeep(row)
 }
 //#endregion
 
 //#region 查
-const tableData = ref<TableData[]>([])
+const userData = ref<UserData[]>([])
 const searchFormRef = ref<FormInstance | null>(null)
 const searchData = reactive({
   username: "",
-  phone: ""
+  phone: "",
+  ordering: ""
 })
-const getTableData = () => {
+const getUserData = () => {
   loading.value = true
-  getTableDataApi({
-    currentPage: paginationData.currentPage,
-    size: paginationData.pageSize,
-    username: searchData.username || undefined,
-    phone: searchData.phone || undefined
+  getUserDataApi({
+    page: paginationData.currentPage,
+    page_size: paginationData.pageSize,
+    ordering: searchData.ordering || undefined,
+    search: searchData.username || searchData.phone || undefined
   })
     .then(({ data }) => {
-      paginationData.total = data.total
-      tableData.value = data.list
+      paginationData.total = data.count
+      userData.value = data.items
     })
     .catch(() => {
-      tableData.value = []
+      userData.value = []
     })
     .finally(() => {
       loading.value = false
     })
 }
 const handleSearch = () => {
-  paginationData.currentPage === 1 ? getTableData() : (paginationData.currentPage = 1)
+  paginationData.currentPage === 1 ? getUserData() : (paginationData.currentPage = 1)
 }
 const resetSearch = () => {
   searchFormRef.value?.resetFields()
@@ -108,7 +114,7 @@ const resetSearch = () => {
 //#endregion
 
 /** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], getTableData, { immediate: true })
+watch([() => paginationData.currentPage, () => paginationData.pageSize], getUserData, { immediate: true })
 </script>
 
 <template>
@@ -138,25 +144,26 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
             <el-button type="primary" :icon="Download" circle />
           </el-tooltip>
           <el-tooltip content="刷新当前页">
-            <el-button type="primary" :icon="RefreshRight" circle @click="getTableData" />
+            <el-button type="primary" :icon="RefreshRight" circle @click="getUserData" />
           </el-tooltip>
         </div>
       </div>
       <div class="table-wrapper">
-        <el-table :data="tableData">
+        <el-table :data="userData">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="username" label="用户名" align="center" />
-          <el-table-column prop="roles" label="角色" align="center">
+          <el-table-column prop="is_staff" label="角色" align="center">
             <template #default="scope">
-              <el-tag v-if="scope.row.roles === 'admin'" type="primary" effect="plain">admin</el-tag>
-              <el-tag v-else type="warning" effect="plain">{{ scope.row.roles }}</el-tag>
+              <el-tag v-if="scope.row.is_superuser" type="primary" effect="plain">superuser</el-tag>
+              <el-tag v-if="scope.row.is_admin" type="primary" effect="plain">admin</el-tag>
+              <el-tag v-else type="warning" effect="plain">staff</el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="phone" label="手机号" align="center" />
           <el-table-column prop="email" label="邮箱" align="center" />
-          <el-table-column prop="status" label="状态" align="center">
+          <el-table-column prop="is_active" label="状态" align="center">
             <template #default="scope">
-              <el-tag v-if="scope.row.status" type="success" effect="plain">启用</el-tag>
+              <el-tag v-if="scope.row.is_active" type="success" effect="plain">启用</el-tag>
               <el-tag v-else type="danger" effect="plain">禁用</el-tag>
             </template>
           </el-table-column>
@@ -193,8 +200,14 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTabl
         <el-form-item prop="username" label="用户名">
           <el-input v-model="formData.username" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="password" label="密码" v-if="formData.id === undefined">
+        <el-form-item prop="password" label="密码">
           <el-input v-model="formData.password" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="email" label="邮箱">
+          <el-input v-model="formData.email" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="phone" label="手机号">
+          <el-input v-model="formData.phone" placeholder="请输入" />
         </el-form-item>
       </el-form>
       <template #footer>

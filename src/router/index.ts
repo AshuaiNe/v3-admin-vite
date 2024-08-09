@@ -103,30 +103,21 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
-    path: "/table",
+    path: "/user",
     component: Layouts,
-    redirect: "/table/element-plus",
-    name: "Table",
+    redirect: "/user/info",
+    name: "User",
     meta: {
-      title: "表格",
+      title: "系统信息",
       elIcon: "Grid"
     },
     children: [
       {
-        path: "element-plus",
-        component: () => import("@/views/table/element-plus/index.vue"),
-        name: "ElementPlus",
+        path: "info",
+        component: () => import("@/views/user/index.vue"),
+        name: "Info",
         meta: {
-          title: "Element Plus",
-          keepAlive: true
-        }
-      },
-      {
-        path: "vxe-table",
-        component: () => import("@/views/table/vxe-table/index.vue"),
-        name: "VxeTable",
-        meta: {
-          title: "Vxe Table",
+          title: "用户信息",
           keepAlive: true
         }
       }
