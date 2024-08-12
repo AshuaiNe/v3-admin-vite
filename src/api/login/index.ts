@@ -10,10 +10,10 @@ export function loginApi(data: Login.LoginRequestData) {
   })
 }
 
-/** 获取用户详情 */
-export function getUserInfoApi() {
-  return request<Login.UserInfoResponseData>({
-    url: "user/info",
+/** 获取用户权限 */
+export function getUserPermissionsApi() {
+  return request<Login.UserPermissionsResponseData>({
+    url: "user/userPermissions",
     method: "get"
   })
 }

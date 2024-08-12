@@ -1,6 +1,12 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
-import { createUserDataApi, deleteUserDataApi, getUserDataApi, updateUserDataApi } from "@/api/user"
+import {
+  bulkDeleteUserDataApi,
+  createUserDataApi,
+  deleteUserDataApi,
+  getUserDataApi,
+  updateUserDataApi
+} from "@/api/user"
 import { CreateOrUpdateUserRequestData, UserData } from "@/api/user/types/user"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
@@ -72,7 +78,9 @@ const handleDelete = (row: UserData) => {
 //#region 改
 const handleUpdate = (row: UserData) => {
   dialogVisible.value = true
-  row.phone = row.phone.toString()
+  if (row.is_selected !== undefined) {
+    delete row.is_selected
+  }
   formData.value = cloneDeep(row)
 }
 //#endregion
@@ -95,7 +103,11 @@ const getUserData = () => {
   })
     .then(({ data }) => {
       paginationData.total = data.count
-      userData.value = data.items
+      userData.value = data.items.map((item) => {
+        item.phone = item.phone.toString()
+        item.is_selected = false
+        return item
+      })
     })
     .catch(() => {
       userData.value = []
@@ -110,6 +122,38 @@ const handleSearch = () => {
 const resetSearch = () => {
   searchFormRef.value?.resetFields()
   handleSearch()
+}
+//#endregion
+
+//#region 批量删除用户
+const handleBatchDelete = () => {
+  console.log(userData.value)
+  const selectedData = userData.value.filter((item) => item.is_selected)
+  if (selectedData.length === 0) {
+    ElMessage.warning("请选择要删除的用户")
+    return
+  }
+  ElMessageBox.confirm(`正在删除${selectedData.length}个用户，确认删除？`, "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    bulkDeleteUserDataApi(selectedData.map((item) => item.id)).then(() => {
+      ElMessage.success("删除成功")
+      getUserData()
+    })
+  })
+}
+//#endregion
+
+//#region 监听复选框的选择状态改变
+const handleSelectionChange = (val: UserData[]) => {
+  userData.value.forEach((item) => {
+    const is_selected = val.some((valItem) => valItem.id === item.id)
+    if (item.is_selected !== is_selected) {
+      item.is_selected = is_selected
+    }
+  })
 }
 //#endregion
 
@@ -137,7 +181,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getUser
       <div class="toolbar-wrapper">
         <div>
           <el-button type="primary" :icon="CirclePlus" @click="dialogVisible = true">新增用户</el-button>
-          <el-button type="danger" :icon="Delete">批量删除</el-button>
+          <el-button type="danger" :icon="Delete" @click="handleBatchDelete">批量删除</el-button>
         </div>
         <div>
           <el-tooltip content="下载">
@@ -149,13 +193,13 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getUser
         </div>
       </div>
       <div class="table-wrapper">
-        <el-table :data="userData">
+        <el-table :data="userData" @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="username" label="用户名" align="center" />
           <el-table-column prop="is_staff" label="角色" align="center">
             <template #default="scope">
               <el-tag v-if="scope.row.is_superuser" type="primary" effect="plain">superuser</el-tag>
-              <el-tag v-if="scope.row.is_admin" type="primary" effect="plain">admin</el-tag>
+              <el-tag v-if="scope.row.is_staff" type="primary" effect="plain">admin</el-tag>
               <el-tag v-else type="warning" effect="plain">staff</el-tag>
             </template>
           </el-table-column>

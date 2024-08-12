@@ -35,3 +35,12 @@ export function getUserDataApi(params: User.UserInfoRequestData) {
     params
   })
 }
+
+/** 批量删除 */
+export function bulkDeleteUserDataApi(ids: number[]) {
+  return request({
+    url: "user/bulk/delete",
+    method: "delete",
+    data: ids
+  })
+}

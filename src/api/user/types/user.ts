@@ -25,6 +25,7 @@ export interface UserData {
   is_active: boolean
   is_staff: boolean
   is_superuser: boolean
+  is_selected?: boolean
   create_time: string
 }
 
