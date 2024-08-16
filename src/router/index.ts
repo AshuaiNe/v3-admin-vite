@@ -60,7 +60,8 @@ export const constantRoutes: RouteRecordRaw[] = [
         }
       }
     ]
-  },
+  }
+  /**,
   {
     path: "/user",
     component: Layouts,
@@ -81,7 +82,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         }
       }
     ]
-  }
+  }*/
 ]
 
 /**
@@ -91,32 +92,23 @@ export const constantRoutes: RouteRecordRaw[] = [
  */
 export const dynamicRoutes: RouteRecordRaw[] = [
   {
-    path: "/permission",
+    path: "/systemInfo",
     component: Layouts,
-    redirect: "/permission/page",
-    name: "Permission",
+    redirect: "/systemInfo/userInfo",
+    name: "SystemInformation",
     meta: {
-      title: "权限",
-      svgIcon: "lock",
-      roles: ["admin", "editor"], // 可以在根路由中设置角色
-      alwaysShow: true // 将始终显示根菜单
+      title: "系统信息",
+      roles: ["admin"], // 可以在根路由中设置角色
+      alwaysShow: false // 将始终显示根菜单
     },
     children: [
       {
-        path: "page",
-        component: () => import("@/views/permission/page.vue"),
-        name: "PagePermission",
+        path: "userInfo",
+        component: () => import("@/views/user/index.vue"),
+        name: "userInfo",
         meta: {
-          title: "页面级",
+          title: "用户信息",
           roles: ["admin"] // 或者在子导航中设置角色
-        }
-      },
-      {
-        path: "directive",
-        component: () => import("@/views/permission/directive.vue"),
-        name: "DirectivePermission",
-        meta: {
-          title: "按钮级" // 如果未设置角色，则表示：该页面不需要权限，但会继承根路由的角色
         }
       }
     ]

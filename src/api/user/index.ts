@@ -11,9 +11,9 @@ export function createUserDataApi(data: User.CreateOrUpdateUserRequestData) {
 }
 
 /** 删 */
-export function deleteUserDataApi(id: number) {
+export function deleteUserDataApi(ids: number) {
   return request({
-    url: `user/${id}`,
+    url: `user/${ids}`,
     method: "delete"
   })
 }
