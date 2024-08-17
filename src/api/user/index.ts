@@ -13,7 +13,7 @@ export function createUserDataApi(data: User.CreateOrUpdateUserRequestData) {
 /** 删 */
 export function deleteUserDataApi(ids: number) {
   return request({
-    url: `user/${ids}`,
+    url: `user/delete/${ids}`,
     method: "delete"
   })
 }
@@ -22,7 +22,7 @@ export function deleteUserDataApi(ids: number) {
 export function updateUserDataApi(data: User.CreateOrUpdateUserRequestData) {
   return request({
     url: `user/${data.id}`,
-    method: "put",
+    method: "delete",
     data
   })
 }

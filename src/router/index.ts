@@ -60,29 +60,28 @@ export const constantRoutes: RouteRecordRaw[] = [
         }
       }
     ]
-  }
-  /**,
+  },
   {
-    path: "/user",
+    path: "/Ah",
     component: Layouts,
-    redirect: "/user/info",
+    redirect: "/Ah/contract",
     name: "User",
     meta: {
-      title: "系统信息",
+      title: "Ah",
       elIcon: "Grid"
     },
     children: [
       {
-        path: "info",
-        component: () => import("@/views/user/index.vue"),
+        path: "contract",
+        component: () => import("@/views/ah/contract.vue"),
         name: "Info",
         meta: {
-          title: "用户信息",
+          title: "合约信息",
           keepAlive: true
         }
       }
     ]
-  }*/
+  }
 ]
 
 /**
