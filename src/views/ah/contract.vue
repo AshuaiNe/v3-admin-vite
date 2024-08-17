@@ -140,10 +140,10 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getCont
   <div class="app-container">
     <el-card v-loading="loading" shadow="never" class="search-wrapper">
       <el-form ref="searchFormRef" :inline="true" :model="searchData">
-        <el-form-item prop="username" label="合约名称">
+        <el-form-item prop="name" label="合约名称">
           <el-input v-model="searchData.name" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="phone" label="合约地址">
+        <el-form-item prop="address" label="合约地址">
           <el-input v-model="searchData.address" placeholder="请输入" />
         </el-form-item>
         <el-form-item>
