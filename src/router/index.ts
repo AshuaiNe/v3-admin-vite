@@ -79,6 +79,15 @@ export const constantRoutes: RouteRecordRaw[] = [
           title: "合约信息",
           keepAlive: true
         }
+      },
+      {
+        path: "function",
+        component: () => import("@/views/ah/function.vue"),
+        name: "function",
+        meta: {
+          title: "合约方法",
+          keepAlive: true
+        }
       }
     ]
   }

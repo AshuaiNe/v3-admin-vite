@@ -1,10 +1,11 @@
-export interface CreateOrUpdateContractRequestData {
+export interface CreateOrUpdateFunctionRequestData {
   id?: number
   name: string
-  address: string
+  contract: string
+  abi: object
 }
 
-export interface ContractListRequestData {
+export interface FunctionListRequestData {
   /** 当前页码 */
   page?: number
   /** 每页条数 */
@@ -15,16 +16,17 @@ export interface ContractListRequestData {
   search?: string
 }
 
-export interface ContractData {
+export interface FunctionData {
   id: number
   name: string
-  address: string
+  contract: string
+  abi: object
   is_selected?: boolean
   created_at: string
   updated_at: string
 }
 
-export type ContractResponseData = ApiResponseData<{
+export type FunctionResponseData = ApiResponseData<{
   count: number
-  items: ContractData[]
+  items: FunctionData[]
 }>

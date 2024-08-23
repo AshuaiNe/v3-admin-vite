@@ -1,16 +1,16 @@
 <script lang="ts" setup>
 import { reactive, ref, watch } from "vue"
-import { CreateOrUpdateContractRequestData, ContractData } from "@/api/ah/types/contract"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import { cloneDeep } from "lodash-es"
 import {
-  createContractDataApi,
-  deleteContractDataApi,
-  getContractDataApi,
-  updateContractDataApi
-} from "@/api/ah/contract"
+  createFunctionDataApi,
+  deleteFunctionDataApi,
+  getFunctionDataApi,
+  updateFunctionDataApi
+} from "@/api/ah/function"
+import { CreateOrUpdateFunctionRequestData, FunctionData } from "@/api/ah/types/function"
 
 defineOptions({
   // 命名当前组件
@@ -21,28 +21,30 @@ const loading = ref<boolean>(false)
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 //#region 增
-const DEFAULT_FORM_DATA: CreateOrUpdateContractRequestData = {
+const DEFAULT_FORM_DATA: CreateOrUpdateFunctionRequestData = {
   id: undefined,
   name: "",
-  address: ""
+  contract: "",
+  abi: {}
 }
 const dialogVisible = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
-const formData = ref<CreateOrUpdateContractRequestData>(cloneDeep(DEFAULT_FORM_DATA))
-const formRules: FormRules<CreateOrUpdateContractRequestData> = {
+const formData = ref<CreateOrUpdateFunctionRequestData>(cloneDeep(DEFAULT_FORM_DATA))
+const formRules: FormRules<CreateOrUpdateFunctionRequestData> = {
   name: [{ required: true, trigger: "blur", message: "请输入名称" }],
-  address: [{ required: true, trigger: "blur", message: "请输入地址" }]
+  // contract: [{ required: true, trigger: "blur", message: "请选择合约" }],
+  abi: [{ required: true, trigger: "blur", message: "请输入ABI" }]
 }
 const handleCreateOrUpdate = () => {
   formRef.value?.validate((valid: boolean, fields) => {
     if (!valid) return console.error("表单校验不通过", fields)
     loading.value = true
-    const api = formData.value.id === undefined ? createContractDataApi : updateContractDataApi
+    const api = formData.value.id === undefined ? createFunctionDataApi : updateFunctionDataApi
     api(formData.value)
       .then(() => {
         ElMessage.success("操作成功")
         dialogVisible.value = false
-        getContractData()
+        getFunctionData()
       })
       .finally(() => {
         loading.value = false
@@ -56,22 +58,22 @@ const resetForm = () => {
 //#endregion
 
 //#region 删
-const handleDelete = (row: ContractData) => {
+const handleDelete = (row: FunctionData) => {
   ElMessageBox.confirm(`正在删除合约：${row.name}，确认删除？`, "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning"
   }).then(() => {
-    deleteContractDataApi(row.id).then(() => {
+    deleteFunctionDataApi(row.id).then(() => {
       ElMessage.success("删除成功")
-      getContractData()
+      getFunctionData()
     })
   })
 }
 //#endregion
 
 //#region 改
-const handleUpdate = (row: ContractData) => {
+const handleUpdate = (row: FunctionData) => {
   dialogVisible.value = true
   if (row.is_selected !== undefined) {
     delete row.is_selected
@@ -81,37 +83,37 @@ const handleUpdate = (row: ContractData) => {
 //#endregion
 
 //#region 查
-const contractData = ref<ContractData[]>([])
+const functionData = ref<FunctionData[]>([])
 const searchFormRef = ref<FormInstance | null>(null)
 const searchData = reactive({
   name: "",
-  address: "",
   ordering: ""
 })
-const getContractData = () => {
+const getFunctionData = () => {
   loading.value = true
-  getContractDataApi({
+  getFunctionDataApi({
     page: paginationData.currentPage,
     page_size: paginationData.pageSize,
     ordering: searchData.ordering || undefined,
-    search: searchData.name || searchData.address || undefined
+    search: searchData.name || undefined
   })
     .then(({ data }) => {
       paginationData.total = data.count
-      contractData.value = data.items.map((item) => {
+      functionData.value = data.items.map((item) => {
         item.is_selected = false
+        console.log(item)
         return item
       })
     })
     .catch(() => {
-      contractData.value = []
+      functionData.value = []
     })
     .finally(() => {
       loading.value = false
     })
 }
 const handleSearch = () => {
-  paginationData.currentPage === 1 ? getContractData() : (paginationData.currentPage = 1)
+  paginationData.currentPage === 1 ? getFunctionData() : (paginationData.currentPage = 1)
 }
 const resetSearch = () => {
   searchFormRef.value?.resetFields()
@@ -120,8 +122,8 @@ const resetSearch = () => {
 //#endregion
 
 //#region 监听复选框的选择状态改变
-const handleSelectionChange = (val: ContractData[]) => {
-  contractData.value.forEach((item) => {
+const handleSelectionChange = (val: FunctionData[]) => {
+  functionData.value.forEach((item) => {
     const is_selected = val.some((valItem) => valItem.id === item.id)
     if (item.is_selected !== is_selected) {
       item.is_selected = is_selected
@@ -130,19 +132,19 @@ const handleSelectionChange = (val: ContractData[]) => {
 }
 //#endregion
 
+//#region 查询合约
+//#endregion
+
 /** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], getContractData, { immediate: true })
+watch([() => paginationData.currentPage, () => paginationData.pageSize], getFunctionData, { immediate: true })
 </script>
 
 <template>
   <div class="app-container">
     <el-card v-loading="loading" shadow="never" class="search-wrapper">
       <el-form ref="searchFormRef" :inline="true" :model="searchData">
-        <el-form-item prop="name" label="合约名称">
+        <el-form-item prop="name" label="名称">
           <el-input v-model="searchData.name" placeholder="请输入" />
-        </el-form-item>
-        <el-form-item prop="address" label="合约地址">
-          <el-input v-model="searchData.address" placeholder="请输入" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">查询</el-button>
@@ -153,19 +155,20 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getCont
     <el-card v-loading="loading" shadow="never">
       <div class="toolbar-wrapper">
         <div>
-          <el-button type="primary" :icon="CirclePlus" @click="dialogVisible = true">新增合约</el-button>
+          <el-button type="primary" :icon="CirclePlus" @click="dialogVisible = true">新增方法</el-button>
         </div>
         <div>
           <el-tooltip content="刷新当前页">
-            <el-button type="primary" :icon="RefreshRight" circle @click="getContractData" />
+            <el-button type="primary" :icon="RefreshRight" circle @click="getFunctionData" />
           </el-tooltip>
         </div>
       </div>
       <div class="table-wrapper">
-        <el-table :data="contractData" @selection-change="handleSelectionChange">
+        <el-table :data="functionData" @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="name" label="合约" align="center" />
-          <el-table-column prop="address" label="地址" align="center" />
+          <el-table-column prop="name" label="名称" align="center" />
+          <el-table-column prop="contract" label="合约地址" align="center" show-overflow-tooltip />
+          <el-table-column prop="abi" label="ABI" align="center" show-overflow-tooltip />
           <el-table-column prop="created_at" label="创建时间" align="center" />
           <el-table-column prop="updated_at" label="更新时间" align="center" />
           <el-table-column fixed="right" label="操作" width="150" align="center">
@@ -192,7 +195,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getCont
     <!-- 新增/修改 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="formData.id === undefined ? '新增合约' : '修改合约'"
+      :title="formData.id === undefined ? '新增方法' : '修改方法'"
       @closed="resetForm"
       width="30%"
     >
@@ -200,8 +203,11 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getCont
         <el-form-item prop="name" label="名称">
           <el-input v-model="formData.name" placeholder="请输入" />
         </el-form-item>
-        <el-form-item prop="address" label="地址">
-          <el-input v-model="formData.address" placeholder="请输入" />
+        <el-form-item prop="contract" label="合约地址">
+          <el-input v-model="formData.contract" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="abi" label="ABI">
+          <el-input v-model="formData.abi" placeholder="请输入" />
         </el-form-item>
       </el-form>
       <template #footer>

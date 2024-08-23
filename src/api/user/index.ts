@@ -22,7 +22,7 @@ export function deleteUserDataApi(ids: number) {
 export function updateUserDataApi(data: User.CreateOrUpdateUserRequestData) {
   return request({
     url: `user/${data.id}`,
-    method: "delete",
+    method: "put",
     data
   })
 }

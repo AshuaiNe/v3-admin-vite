@@ -22,7 +22,7 @@ export function deleteContractDataApi(ids: number) {
 export function updateContractDataApi(data: Contract.CreateOrUpdateContractRequestData) {
   return request({
     url: `contract/${data.id}`,
-    method: "delete",
+    method: "put",
     data
   })
 }
