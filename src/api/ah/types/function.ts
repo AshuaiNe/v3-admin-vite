@@ -5,6 +5,15 @@ export interface CreateOrUpdateFunctionRequestData {
   abi: object
 }
 
+export interface ExecuteFunctionRequestData {
+  name: string
+  contract: string
+  abi: object
+  chain: number
+  inputs?: { [key: string]: any } // 用于动态输入项
+  private_key: string
+}
+
 export interface FunctionListRequestData {
   /** 当前页码 */
   page?: number
@@ -22,6 +31,9 @@ export interface FunctionData {
   contract: string
   abi: object
   is_selected?: boolean
+  inputs?: { [key: string]: any } // 用于动态输入项
+  private_key: string
+  chain: number
   created_at: string
   updated_at: string
 }

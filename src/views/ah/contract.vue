@@ -165,12 +165,12 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getCont
         <el-table :data="contractData" @selection-change="handleSelectionChange">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="name" label="合约" align="center" />
-          <el-table-column prop="address" label="地址" align="center" />
+          <el-table-column prop="address" label="地址" align="center" show-overflow-tooltip />
           <el-table-column prop="created_at" label="创建时间" align="center" />
           <el-table-column prop="updated_at" label="更新时间" align="center" />
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
+              <el-button type="warning" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
               <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
             </template>
           </el-table-column>

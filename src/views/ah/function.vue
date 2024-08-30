@@ -10,7 +10,7 @@ import {
   getFunctionDataApi,
   updateFunctionDataApi
 } from "@/api/ah/function"
-import { CreateOrUpdateFunctionRequestData, FunctionData } from "@/api/ah/types/function"
+import { CreateOrUpdateFunctionRequestData, ExecuteFunctionRequestData, FunctionData } from "@/api/ah/types/function"
 
 defineOptions({
   // 命名当前组件
@@ -28,11 +28,12 @@ const DEFAULT_FORM_DATA: CreateOrUpdateFunctionRequestData = {
   abi: {}
 }
 const dialogVisible = ref<boolean>(false)
+const dialogExecute = ref<boolean>(false)
 const formRef = ref<FormInstance | null>(null)
 const formData = ref<CreateOrUpdateFunctionRequestData>(cloneDeep(DEFAULT_FORM_DATA))
 const formRules: FormRules<CreateOrUpdateFunctionRequestData> = {
   name: [{ required: true, trigger: "blur", message: "请输入名称" }],
-  // contract: [{ required: true, trigger: "blur", message: "请选择合约" }],
+  contract: [{ required: true, trigger: "blur", message: "请选择合约" }],
   abi: [{ required: true, trigger: "blur", message: "请输入ABI" }]
 }
 const handleCreateOrUpdate = () => {
@@ -82,6 +83,49 @@ const handleUpdate = (row: FunctionData) => {
 }
 //#endregion
 
+//#region 执行
+const value = ref("")
+const options = [
+  {
+    value: "56",
+    label: "bsc正式链"
+  },
+  {
+    value: "97",
+    label: "bsc测试链"
+  }
+]
+const DEFAULT_EXECUTE_DATA: ExecuteFunctionRequestData = {
+  name: "",
+  contract: "",
+  abi: {},
+  chain: 0,
+  inputs: {},
+  private_key: ""
+}
+const executeData = ref<ExecuteFunctionRequestData>(cloneDeep(DEFAULT_EXECUTE_DATA))
+const executeRules: FormRules<ExecuteFunctionRequestData> = {
+  name: [{ required: true, trigger: "blur", message: "请输入名称" }],
+  contract: [{ required: true, trigger: "blur", message: "请选择合约" }],
+  private_key: [{ required: true, trigger: "blur", message: "请输入私钥" }],
+  abi: [{ required: true, trigger: "blur", message: "请输入ABI" }]
+}
+
+const handleExecute = (row: FunctionData) => {
+  dialogExecute.value = true
+  if (row.is_selected !== undefined) {
+    delete row.is_selected
+  }
+  // 初始化 `inputs` 数组
+  const abi = row.abi as { inputs?: { [key: string]: any } }
+  row.inputs = abi.inputs?.map((input: any) => input.name) || []
+  executeData.value = cloneDeep(row)
+}
+const resetExecute = () => {
+  executeData.value = cloneDeep(DEFAULT_EXECUTE_DATA)
+}
+//#endregion
+
 //#region 查
 const functionData = ref<FunctionData[]>([])
 const searchFormRef = ref<FormInstance | null>(null)
@@ -101,7 +145,6 @@ const getFunctionData = () => {
       paginationData.total = data.count
       functionData.value = data.items.map((item) => {
         item.is_selected = false
-        console.log(item)
         return item
       })
     })
@@ -171,9 +214,10 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getFunc
           <el-table-column prop="abi" label="ABI" align="center" show-overflow-tooltip />
           <el-table-column prop="created_at" label="创建时间" align="center" />
           <el-table-column prop="updated_at" label="更新时间" align="center" />
-          <el-table-column fixed="right" label="操作" width="150" align="center">
+          <el-table-column fixed="right" label="操作" width="200" align="center">
             <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
+              <el-button type="primary" text bg size="small" @click="handleExecute(scope.row)">执行</el-button>
+              <el-button type="warning" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
               <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
             </template>
           </el-table-column>
@@ -192,6 +236,36 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getFunc
         />
       </div>
     </el-card>
+    <el-dialog v-model="dialogExecute" title="执行方法" @closed="resetExecute" width="30%">
+      <el-form ref="formRef" :model="executeData" :rules="executeRules" label-width="100px" label-position="left">
+        <el-form-item prop="name" label="名称">
+          <el-input v-model="executeData.name" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="contract" label="合约地址">
+          <el-input v-model="executeData.contract" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="private_key" label="操作者私钥">
+          <el-input v-model="executeData.private_key" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="abi" label="abi">
+          <el-input v-model="executeData.abi" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item label="网络">
+          <el-select v-model="value" placeholder="Select" style="width: 240px">
+            <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <template v-for="(input, index) in executeData.inputs" :key="index">
+          <el-form-item :label="'参数' + input">
+            <el-input v-model="input.value" placeholder="请输入" />
+          </el-form-item>
+        </template>
+      </el-form>
+      <template #footer>
+        <el-button @click="dialogExecute = false">取消</el-button>
+        <el-button type="primary" @click="handleCreateOrUpdate" :loading="loading">确认</el-button>
+      </template>
+    </el-dialog>
     <!-- 新增/修改 -->
     <el-dialog
       v-model="dialogVisible"
