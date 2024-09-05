@@ -36,11 +36,11 @@ export function getFunctionDataApi(params: Function.FunctionListRequestData) {
   })
 }
 
-/** 批量删除 */
-export function bulkDeleteUserDataApi(ids: number[]) {
+/** 执行方法 */
+export function executeFunctionDataApi(data: Function.ExecuteFunctionRequestData) {
   return request({
-    url: "user/bulk/delete",
-    method: "delete",
-    data: ids
+    url: "execution/contract",
+    method: "post",
+    data
   })
 }

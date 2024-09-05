@@ -7,6 +7,7 @@ import { cloneDeep } from "lodash-es"
 import {
   createFunctionDataApi,
   deleteFunctionDataApi,
+  executeFunctionDataApi,
   getFunctionDataApi,
   updateFunctionDataApi
 } from "@/api/ah/function"
@@ -84,7 +85,6 @@ const handleUpdate = (row: FunctionData) => {
 //#endregion
 
 //#region 执行
-const value = ref("")
 const options = [
   {
     value: "56",
@@ -100,15 +100,13 @@ const DEFAULT_EXECUTE_DATA: ExecuteFunctionRequestData = {
   contract: "",
   abi: {},
   chain: 0,
-  inputs: {},
+  inputs: [],
   private_key: ""
 }
 const executeData = ref<ExecuteFunctionRequestData>(cloneDeep(DEFAULT_EXECUTE_DATA))
 const executeRules: FormRules<ExecuteFunctionRequestData> = {
-  name: [{ required: true, trigger: "blur", message: "请输入名称" }],
-  contract: [{ required: true, trigger: "blur", message: "请选择合约" }],
   private_key: [{ required: true, trigger: "blur", message: "请输入私钥" }],
-  abi: [{ required: true, trigger: "blur", message: "请输入ABI" }]
+  chain: [{ required: true, trigger: "blur", message: "请选择链" }]
 }
 
 const handleExecute = (row: FunctionData) => {
@@ -118,11 +116,26 @@ const handleExecute = (row: FunctionData) => {
   }
   // 初始化 `inputs` 数组
   const abi = row.abi as { inputs?: { [key: string]: any } }
-  row.inputs = abi.inputs?.map((input: any) => input.name) || []
+  row.inputs =
+    abi.inputs?.map((input: any) => {
+      return { parameter: input.name, inputValue: "" }
+    }) || []
   executeData.value = cloneDeep(row)
 }
 const resetExecute = () => {
   executeData.value = cloneDeep(DEFAULT_EXECUTE_DATA)
+}
+
+const handleExecuteSubmit = () => {
+  loading.value = true
+  executeFunctionDataApi(executeData.value)
+    .then(() => {
+      ElMessage.success("执行成功")
+      dialogExecute.value = false
+    })
+    .finally(() => {
+      loading.value = false
+    })
 }
 //#endregion
 
@@ -239,31 +252,31 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getFunc
     <el-dialog v-model="dialogExecute" title="执行方法" @closed="resetExecute" width="30%">
       <el-form ref="formRef" :model="executeData" :rules="executeRules" label-width="100px" label-position="left">
         <el-form-item prop="name" label="名称">
-          <el-input v-model="executeData.name" placeholder="请输入" />
+          <el-input v-model="executeData.name" placeholder="请输入" disabled />
         </el-form-item>
         <el-form-item prop="contract" label="合约地址">
-          <el-input v-model="executeData.contract" placeholder="请输入" />
+          <el-input v-model="executeData.contract" placeholder="请输入" disabled />
         </el-form-item>
         <el-form-item prop="private_key" label="操作者私钥">
           <el-input v-model="executeData.private_key" placeholder="请输入" />
         </el-form-item>
         <el-form-item prop="abi" label="abi">
-          <el-input v-model="executeData.abi" placeholder="请输入" />
+          <el-input v-model="executeData.abi" placeholder="请输入" disabled />
         </el-form-item>
         <el-form-item label="网络">
-          <el-select v-model="value" placeholder="Select" style="width: 240px">
+          <el-select v-model="executeData.chain" placeholder="Select" style="width: 240px">
             <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
-        <template v-for="(input, index) in executeData.inputs" :key="index">
-          <el-form-item :label="'参数' + input">
-            <el-input v-model="input.value" placeholder="请输入" />
+        <template v-for="(item, index) in executeData.inputs" :key="index">
+          <el-form-item :label="'参数' + item.parameter">
+            <el-input v-model="item.inputValue" placeholder="请输入" />
           </el-form-item>
         </template>
       </el-form>
       <template #footer>
         <el-button @click="dialogExecute = false">取消</el-button>
-        <el-button type="primary" @click="handleCreateOrUpdate" :loading="loading">确认</el-button>
+        <el-button type="primary" @click="handleExecuteSubmit" :loading="loading">确认</el-button>
       </template>
     </el-dialog>
     <!-- 新增/修改 -->
