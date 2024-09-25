@@ -88,6 +88,15 @@ export const constantRoutes: RouteRecordRaw[] = [
           title: "合约方法",
           keepAlive: true
         }
+      },
+      {
+        path: "transaction",
+        component: () => import("@/views/ah/transaction.vue"),
+        name: "transaction",
+        meta: {
+          title: "交易记录",
+          keepAlive: true
+        }
       }
     ]
   }
