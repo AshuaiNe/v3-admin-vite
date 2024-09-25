@@ -33,7 +33,6 @@ const getTransactionData = () => {
     .then(({ data }) => {
       paginationData.total = data.count
       transactionData.value = data.items.map((item) => {
-        item.is_selected = false
         return item
       })
     })
@@ -50,17 +49,6 @@ const handleSearch = () => {
 const resetSearch = () => {
   searchFormRef.value?.resetFields()
   handleSearch()
-}
-//#endregion
-
-//#region 监听复选框的选择状态改变
-const handleSelectionChange = (val: TransactionData[]) => {
-  transactionData.value.forEach((item) => {
-    const is_selected = val.some((valItem) => valItem.id === item.id)
-    if (item.is_selected !== is_selected) {
-      item.is_selected = is_selected
-    }
-  })
 }
 //#endregion
 
@@ -93,8 +81,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTran
         </div>
       </div>
       <div class="table-wrapper">
-        <el-table :data="transactionData" @selection-change="handleSelectionChange">
-          <el-table-column type="selection" width="50" align="center" />
+        <el-table :data="transactionData">
           <el-table-column prop="chain" label="链" align="center" />
           <el-table-column prop="transaction_hash" label="交易哈希" align="center" show-overflow-tooltip />
           <el-table-column prop="method" label="方法" align="center" />

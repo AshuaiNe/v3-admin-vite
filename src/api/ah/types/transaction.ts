@@ -21,7 +21,6 @@ export interface TransactionData {
   to_address: string
   value: string
   txn_fee: string
-  is_selected?: boolean
 }
 
 export type TransactionResponseData = ApiResponseData<{
