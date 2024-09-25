@@ -102,7 +102,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getTran
           <el-table-column prop="timestamp" label="时间戳" align="center" />
           <el-table-column label="状态" align="center">
             <template #default="{ row }">
-              <el-tag v-if="row.status === '成功'" type="success">成功</el-tag>
+              <el-tag v-if="row.status === '1'" type="success">成功</el-tag>
               <el-tag v-else type="danger">失败</el-tag>
             </template>
           </el-table-column>
